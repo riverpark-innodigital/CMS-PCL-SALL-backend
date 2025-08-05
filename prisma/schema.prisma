@@ -1,0 +1,395 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// customer and agentcy table
+model users {
+  id                                Int                  @id @default(autoincrement())
+  ldapUserId                        String?
+  username                          String?              @unique
+  prefixName                        Int?
+  fullname                          String?
+  email                             String?
+  emailCodeVerify                   String?
+  emailcodeDT                       DateTime?
+  password                          String?
+  passwordToken                     String?
+  phoneNumber                       String?
+  picture                           String?
+  handlerBy                         String?
+  role                              Int?
+  createdAt                         DateTime             @default(now())
+  createBy                          String?              @db.VarChar(100)
+  updatedAt                         DateTime             @updatedAt
+  updateBy                          String?              @db.VarChar(100)
+  active                            Boolean?             @default(true)
+  accounts                          accounts[]           @relation("userAccount")
+  userRole                          roles?               @relation("userRole", fields: [role], references: [id])
+  SaleTeam                          UserSaleTeam[]       @relation("UserPer")
+  SaleTeamManager                   SaleTeam[]           @relation("SaleTeamManager")   
+}
+
+model accounts {
+  id                 String     @id @default(cuid())
+  userId             Int?
+  customerId         Int?
+  providerType       String
+  providerId         String
+  providerAccountId  String
+  refreshToken       String?
+  accessToken        String?
+  accessTokenExpires DateTime?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  user               users?  @relation("userAccount", fields: [userId], references: [id])
+
+  @@unique([providerId, providerAccountId])
+}
+
+model roles {
+  id          Int        @id @default(autoincrement())
+  nameEng     String?
+  nameTH      String?
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  user        users[]    @relation("userRole")
+}
+
+// CMS
+model Supplier {
+  SupplierId            Int                      @id @default(autoincrement())
+  SupplierNameTh        String?                  @db.VarChar(100)
+  SupplierNameEn        String?                  @db.VarChar(100)
+  SupplierDescriptionTH String?
+  SupplierDescriptionEN String?
+  SupplierImage         String?
+  ColorCode             String?                  @db.VarChar(50)
+  Active                Boolean?
+  CreateDate            DateTime                 @default(now())
+  CreateBy              String?                  @db.VarChar(20)
+  UpdateDate            DateTime?                @updatedAt
+  UpdateBy              String?                  @db.VarChar(20)
+
+  Product               Product[]
+  ModelProduct          ModelProduct[]           @relation("ToModel")
+  ProductGroupSup       ProductGroupSup[]        @relation("Supplier")
+  SupplierCompany       SupplierCompany[]
+  BusinessUnits         BusinessUnitSupplier[]
+}
+
+model BusinessUnitSupplier {
+  busId                Int             @id @default(autoincrement())
+  BusinessUnitId       Int
+  SupplierId           Int
+
+  BusinessUnit         BusinessUnit    @relation(fields: [BusinessUnitId], references: [BusinessUnitId])
+  Supplier             Supplier        @relation(fields: [SupplierId], references: [SupplierId])
+}
+
+model SupplierCompany {
+  SuplCpnId      Int       @id @default(autoincrement())
+  SupplierId     Int
+  CompanyId      Int?
+  Active         Boolean?
+  CreateDate     DateTime  @default(now())
+  CreateBy       String?    @db.VarChar(20)
+  Supplier       Supplier?    @relation(fields: [SupplierId], references: [SupplierId])
+  Company        Companys?    @relation(fields: [CompanyId], references: [CompanyId])
+}
+
+model Product {
+  ProductId                                 Int              @id @default(autoincrement())
+  SupplierId                                Int?
+  CompanyId                                 Int?
+  BuId                                      Int?
+  ProductNo                                 String?          @db.VarChar(100)
+  GroupProductId                            Int?
+  ModelProductId                            Int?
+  ProductNameTh                             String?          @db.VarChar(100)
+  ProductNameEn                             String?          @db.VarChar(100)
+  ProductImage                              String?
+  ProductDescriptionHeaderTh                String?          @db.VarChar(100)
+  ProductDescriptionDetailTh                String?          @db.Text
+  ProductDescriptionHeaderEn                String?          @db.VarChar(100)
+  ProductDescriptionDetailEn                String?          @db.Text
+  MeadiaTitle                               String?          @db.VarChar(100)
+  ProductVideo                              String?
+  MeadiaDescription                         String?          @db.VarChar(5000)
+  ProductUpVideo                            String?
+  Active                                    Boolean?
+  CreateDate                                DateTime         @default(now())
+  CreateBy                                  String?          @db.VarChar(20)
+  UpdateDate                                DateTime?        @updatedAt
+  UpdateBy                                  String?          @db.VarChar(20)
+  Expiredate                                DateTime?
+  Supplier                                  Supplier?        @relation(fields: [SupplierId], references: [SupplierId])
+  Company                                   Companys?        @relation("ProductCompany", fields: [CompanyId], references: [CompanyId])
+  GroupProduct                              GroupProduct?    @relation(fields: [GroupProductId], references: [GroupProductId])
+  ModelProduct                              ModelProduct?    @relation(fields: [ModelProductId], references: [ModelProductId])
+  BusinessUnit                              BusinessUnit?      @relation("ProductBu", fields: [BuId], references: [BusinessUnitId])
+  ProductImages                             ProductImage[]
+  ProductFolders                            ProductFolder[]
+  ToNote                                    Notes[]             @relation("ToProduct")
+  PresentFile                               PresentationFile[]  @relation("PresentFile")
+}
+
+model PresentationFile {
+  id                Int               @id @default(autoincrement())
+  FileOriginalName  String?           @db.VarChar(100)
+  FileName          String?           @db.VarChar(100)
+  FilePath          String?           @db.VarChar(100)
+  ProductId         Int        
+  CreateDate        DateTime          @default(now())
+  UpdateDate        DateTime?         @updatedAt
+
+  Product           Product           @relation("PresentFile", fields: [ProductId], references: [ProductId])
+  PresentationKPI   PresentationKPI[] @relation("PresentationKPI")
+}
+
+model PresentationKPI {
+  id                Int                @id @default(autoincrement())
+  PresentTo         String?           @db.VarChar(100)
+  PresentDate       DateTime?
+  Description       String?           @db.VarChar(3000)
+  PresentFileId     Int
+  UserId            String?           @db.VarChar(100)
+  CreateDate        DateTime          @default(now())
+  UpdateDate        DateTime?         @updatedAt
+
+  PresentationFile  PresentationFile  @relation("PresentationKPI", fields: [PresentFileId], references: [id])
+}
+
+model GroupProduct {
+  GroupProductId    Int           @id @default(autoincrement())
+  GroupNameEn       String        @db.VarChar(100)
+  GroupNameTh       String        @db.VarChar(100)
+  ImageName         String?       @db.VarChar(100)
+  ImageOrginalName  String?       @db.VarChar(100)
+  ImagePath         String?       @db.VarChar(100)
+  Active            Boolean?      @default(true)
+  CreateDate        DateTime      @default(now())
+  CreateBy          String        @db.VarChar(100)
+  UpdateDate        DateTime?     @updatedAt
+  UpdateBy          String        @db.VarChar(100)
+  Products          Product[]
+
+  ProductGroupSup   ProductGroupSup[] @relation("GroupProduct")
+}
+
+model ProductGroupSup {
+  id                Int        @id @default(autoincrement())
+  SupplierId        Int
+  ProductGroupId    Int 
+  CreateDate        DateTime      @default(now())
+  UpdateDate        DateTime?     @updatedAt
+
+  Supplier          Supplier      @relation("Supplier", fields: [SupplierId], references: [SupplierId])
+  ProductGroup      GroupProduct  @relation("GroupProduct", fields: [ProductGroupId], references: [GroupProductId])
+}
+
+model ProductImage {
+  ProductImageId     Int       @id @default(autoincrement())
+  ProductId          Int
+  ProductImageNameTh String    @db.VarChar(100)
+  ProductImageNameEn String    @db.VarChar(100)
+  ProductImageImage  String?
+  Active             Boolean
+  CreateDate         DateTime  @default(now())
+  CreateBy           String    @db.VarChar(20)
+  UpdateDate         DateTime? @updatedAt
+  UpdateBy           String?   @db.VarChar(20)
+  Product            Product   @relation(fields: [ProductId], references: [ProductId])
+}
+
+model ProductFolder {
+  ProductFolderId     Int           @id @default(autoincrement())
+  ProductId           Int
+  ProductFolderNameTh String        @db.VarChar(100)
+  ProductFolderNameEn String        @db.VarChar(100)
+  ProductFolderSeq    Int
+  Active              Boolean
+  CreateDate          DateTime      @default(now())
+  CreateBy            String        @db.VarChar(20)
+  UpdateDate          DateTime?     @updatedAt
+  UpdateBy            String?       @db.VarChar(20)
+  Product             Product       @relation(fields: [ProductId], references: [ProductId])
+  ProductFiles        ProductFile[]
+}
+
+model ProductFile {
+  ProductFileId     Int           @id @default(autoincrement())
+  ProductFolderId   Int
+  ProductFileNameTh String        @db.VarChar(100)
+  ProductFileNameEn String        @db.VarChar(100)
+  ProductFile       String?
+  Active            Boolean
+  CreateDate        DateTime      @default(now())
+  CreateBy          String        @db.VarChar(20)
+  UpdateDate        DateTime?     @updatedAt
+  UpdateBy          String?       @db.VarChar(20)
+  ProductFolder     ProductFolder @relation(fields: [ProductFolderId], references: [ProductFolderId])
+}
+
+model ModelProduct {
+
+  ModelProductId    Int           @id @default(autoincrement())
+  ModelCode         String        @db.VarChar(20)
+  ModelNameEn       String        @db.VarChar(100)
+  ModelNameTh       String        @db.VarChar(100)
+  SupplierId        Int?          
+  Active            Boolean
+  CreateDate        DateTime      @default(now())
+  CreateBy          String        @db.VarChar(20)
+  UpdateDate        DateTime?     @updatedAt
+  UpdateBy          String        @db.VarChar(20)
+  Products          Product[]
+  
+  Supplier          Supplier?     @relation("ToModel", fields: [SupplierId], references: [SupplierId])
+}
+
+model UserSaleTeam {
+  id                                        Int               @id @default(autoincrement())
+  SaleTeamId                                Int?          
+  UserID                                    Int?
+  CreateDate                                DateTime          @default(now())
+  CreateBy                                  String?           @db.VarChar(50)
+  UpdateDate                                DateTime?         @updatedAt
+  UpdateBy                                  String?           @db.VarChar(50)
+
+  User                                      users?            @relation("UserPer", fields: [UserID], references: [id])
+  SaleTeam                                  SaleTeam?         @relation("SaleTeam", fields: [SaleTeamId], references: [id])
+}
+
+model SaleTeam {
+  id                                        Int               @id @default(autoincrement())
+  SaleTeamName                              String?           @db.VarChar(100)
+  CompanyId                                 Int?
+  BUID                                      Int?
+  Manager                                   Int?
+  Active                                    Boolean           @default(true)
+  CreateDate                                DateTime          @default(now())
+  CreateBy                                  String?           @db.VarChar(50)
+  UpdateDate                                DateTime?         @updatedAt
+  UpdateBy                                  String?           @db.VarChar(50)
+
+  UserManager                               users?            @relation("SaleTeamManager", fields: [Manager], references: [id])
+  BU                                        BusinessUnit?     @relation("SaleTeamBu", fields: [BUID], references: [BusinessUnitId])
+  Company                                   Companys?         @relation("SaleTeam", fields: [CompanyId], references: [CompanyId])
+  UserPer                                   UserSaleTeam[]    @relation("SaleTeam")
+}
+
+model LogTransation {
+  LogTransationID                             Int                     @id @default(autoincrement())
+  UserID                                      String?
+  PageType                                    String                  @db.VarChar(20)
+  ObjectID                                    Int?
+  Active                                      Boolean
+  CreateDate                                  DateTime                @default(now())
+  CreateBy                                    String                  @db.VarChar(20)
+  UpdateDate                                  DateTime?               @updatedAt
+  UpdateBy                                    String                  @db.VarChar(20)
+}
+
+model Favorite {
+  FavoriteId                                  Int                     @id @default(autoincrement())
+  UserID                                      String?
+  ObjectID                                    Int?
+  ObjectType                                  String                  @db.VarChar(20)
+  Active                                      Boolean
+  CreateDate                                  DateTime                @default(now())
+}
+
+model ObjectView {
+  ObjectViewId                                Int                     @id @default(autoincrement())
+  UserID                                      String?
+  ObjectID                                    Int?
+  ObjectType                                  String                  @db.VarChar(20)
+  Active                                      Boolean
+  CreateDate                                  DateTime                @default(now())
+}
+
+model Companys {
+  CompanyId             Int                   @id @default(autoincrement())
+  CompanyNameEN         String?               @db.VarChar(100)
+  CompanyNameTH         String?               @db.VarChar(100)
+  DescriptionEN         String?               @db.VarChar(5000)
+  DescriptionTH         String?               @db.VarChar(5000)
+  CompamyPicture        String?               @db.VarChar(100)
+  CompamyPictureName    String?               @db.VarChar(100)
+  CompanyNameFile       String?               @db.VarChar(100)
+  Active                Boolean?              @default(true)
+  CreateDate            DateTime              @default(now())
+  CreateBy              String?               @db.VarChar(100)
+  UpdateDate            DateTime?             @updatedAt
+  UpdateBy              String?               @db.VarChar(100)
+
+  SupplierCompany       SupplierCompany[]
+  GroupPermission       SaleTeam[]            @relation("SaleTeam")
+  Product               Product[]             @relation("ProductCompany")
+  BusinessUnits         CompanyBusinessUnit[]
+}
+
+model BusinessUnit {
+  BusinessUnitId        Int                     @id @default(autoincrement())
+  Name                  String?                 @db.VarChar(100)
+  Description           String?                 @db.VarChar(3000)
+  Active                Boolean?                @default(true)
+  CreateDate            DateTime                @default(now())
+  CreateBy              String?                 @db.VarChar(100)
+  UpdateDate            DateTime?               @updatedAt
+  UpdateBy              String?                 @db.VarChar(100)
+
+  Companies             CompanyBusinessUnit[]
+  Suppliers             BusinessUnitSupplier[]
+  SaleTeam              SaleTeam[]              @relation("SaleTeamBu")
+  ProductBu             Product[]               @relation("ProductBu")
+}
+
+model CompanyBusinessUnit {
+  cmuId                Int                    @id @default(autoincrement())
+  companyId            Int
+  businessUnitId       Int
+
+  Company              Companys               @relation(fields: [companyId], references: [CompanyId])
+  BusinessUnit         BusinessUnit           @relation(fields: [businessUnitId], references: [BusinessUnitId])
+}
+
+model Notes {
+  noteID                Int        @id @default(autoincrement())
+  PresentToEN           String?    @db.VarChar(100)
+  PresentToTH           String?    @db.VarChar(100)
+  PresentDate           DateTime?
+  DescriptionEN         String?    @db.VarChar(1000)
+  DescriptionTH         String?    @db.VarChar(1000)
+  ProductID             Int?
+  CreateDate            DateTime   @default(now())
+  CreateBy              String     @db.VarChar(20)
+  UpdateDate            DateTime?  @updatedAt
+  UpdateBy              String?    @db.VarChar(20)
+
+  ToProduct             Product?   @relation("ToProduct", fields: [ProductID], references: [ProductId])
+}
+
+model Permission {
+  Permissionid           Int       @id @default(autoincrement())
+  Role                   String    @db.VarChar(50)
+  Permissions            String[]  @db.Text
+  CreateBy               String?   @db.VarChar(100)
+  CreateDate             DateTime  @default(now())
+  UpdateBy               String?   @db.VarChar(100)
+  UpdateDate             DateTime  @updatedAt
+}
