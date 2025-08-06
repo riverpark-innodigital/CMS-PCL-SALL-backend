@@ -122,7 +122,7 @@ router.get('/users/:ldapUserId', gettingUserById);
 *       200:
 *         description: Getting the users by role name successfully.
 */
-router.get('/users_role/:role', gettingUserByRole);
+router.get('/users_role/:role/:isAll?', gettingUserByRole);
 
 /**
 * @swagger

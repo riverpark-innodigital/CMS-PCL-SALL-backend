@@ -252,15 +252,16 @@ exports.updatingCompanyById = async (req, res) => {
 
         if (!response) throw "have problem in the creating company";
 
+        const filterBuconverted = buconverted ? buconverted.filter(bu => bu.trim() !== "") : [];
 
-        if (buconverted.length !== 0) {
+        if (filterBuconverted.length !== 0) {
             await prisma.companyBusinessUnit.deleteMany({
                 where: {
                     companyId: Number(CompanyID),
                 },
             });
 
-            for (const buid of buconverted) {
+            for (const buid of filterBuconverted) {
                 const buCreation = await prisma.companyBusinessUnit.create({
                     data: {
                         companyId: Number(CompanyID),

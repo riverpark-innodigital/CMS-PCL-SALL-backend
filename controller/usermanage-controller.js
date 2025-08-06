@@ -28,7 +28,7 @@ exports.GettingUserDirectory = async (req, res) => {
 
 exports.gettingUserByRole = async (req, res) => {
     try {
-        const { role } = req.params;
+        const { role, isAll } = req.params;
 
         const response = await prisma.roles.findFirst({
             where: {
@@ -39,8 +39,10 @@ exports.gettingUserByRole = async (req, res) => {
                 user: true,
             }
         });
+        
+        let unassignedUsers = response.user;
 
-        if (role === 'Sale') {
+        if (role === 'Sale' && !isAll) {
             const assignedSale = await prisma.userSaleTeam.findMany({
                 select: { UserID: true }
             });
@@ -49,7 +51,7 @@ exports.gettingUserByRole = async (req, res) => {
             unassignedUsers = response.user.filter(
                 user => !assignedIds.includes(user.id)
             );
-        } else if (role === 'Sale Manager') {
+        } else if (role === 'Sale Manager' && !isAll) {
             const assignedSaleManager = await prisma.saleTeam.findMany({
                 select: { Manager: true }
             });

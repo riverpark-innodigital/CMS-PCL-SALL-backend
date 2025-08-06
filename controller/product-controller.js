@@ -285,7 +285,7 @@ exports.getAllProduct = async (req, res) => {
         const response = products.map(product => ({
             ProductId: product.ProductId,
             ProductNo: product.ProductNo,
-            Campany: `${product?.Company?.CompanyNameEN}, ${product?.BusinessUnit?.Name}`,
+            Campany: `${product?.Company?.CompanyNameEN && product?.BusinessUnit?.Name ? `${product?.Company?.CompanyNameEN}, ${product?.BusinessUnit?.Name}`: ""}`,
             ProductNameTh: product.ProductNameTh,
             ProductNameEn: product.ProductNameEn,
             MeadiaTitle: product.MeadiaTitle,
@@ -410,7 +410,6 @@ exports.productCreate = async (req, res) => {
                 GroupProductId: grupId,
                 ModelProductId: mdlId,
                 BuId: Number(BuId),
-                CompanyId: Number(CompanyId),
                 ProductNameTh,
                 ProductNameEn,
                 ProductNo: ProductCode,
@@ -429,6 +428,9 @@ exports.productCreate = async (req, res) => {
                 Expiredate: formattedExpireDate || null
             },
         });
+        if (CompanyId !== undefined && CompanyId !== null && CompanyId !== "") {
+            data.CompanyId = Number(CompanyId);
+        }
 
         const createdImages = [];
         const createdFile = [];

@@ -48,7 +48,7 @@ exports.findBUs = async (req, res) => {
             },
             orderBy: [
                 {
-                    BusinessUnitId: 'desc',
+                    UpdateDate: 'desc',
                 }
             ]
         });
@@ -174,13 +174,21 @@ exports.gettingCompanyAndBu = async (req, res) => {
         });
 
         for (const com of com_bu) {
-            for (const bu of com?.BusinessUnits) {
+            if(!com.BusinessUnits || com.BusinessUnits.length === 0){
                 result.push({
                     companyId: com.CompanyId,
                     companyName: com.CompanyNameEN,
-                    buId: bu.BusinessUnit.BusinessUnitId,
-                    buName: bu.BusinessUnit.Name,
-                })
+                    buName: "",
+                });
+            }else{
+                for (const bu of com?.BusinessUnits) {
+                    result.push({
+                        companyId: com.CompanyId,
+                        companyName: com.CompanyNameEN,
+                        buId: bu.BusinessUnit.BusinessUnitId,
+                        buName: bu.BusinessUnit.Name,
+                    })
+                }
             }
         }
 
