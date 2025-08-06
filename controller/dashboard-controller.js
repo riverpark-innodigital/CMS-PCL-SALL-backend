@@ -5,6 +5,7 @@ const setResponse = require('../hooks/sendResponse');
 const handleError = require('../hooks/handleError');
 const { getUserByUsername } = require('../service/user-service');
 const { getRoleByRoleId } = require('../service/role-service');
+const { GetGroupPermissionByUserId } = require('./../service/permission-service');
 
 exports.addView = async(req, res) => {
 
@@ -188,22 +189,7 @@ exports.getMostViewProduct = async(req, res) => {
         const dataRole = await getRoleByRoleId(dataUser.role);
         const userRole = dataRole.nameEng;
 
-        if (userRole === 'Sale') {
-            whereClause = { CreateBy: dataUser.fullname };
-        } else if (userRole === 'Sale Manager') {
-            const data = await GetGroupPermissionByUserId(dataUser.id);
-            const teamMembers = data.member?.map(m => m.name) || [];
-            whereClause = {
-                CreateBy: {
-                in: teamMembers
-                }
-            };
-        } else if (userRole === 'Administrator') {
-            whereClause = {};
-        }
-
         const allPrdData = await prisma.product.findMany({
-            where: whereClause,
             select: {
                 ProductId: true,
                 ProductImage: true,
@@ -217,10 +203,25 @@ exports.getMostViewProduct = async(req, res) => {
             }
         });
 
+        if (userRole === 'Sale') {
+            whereClause = { UserID: userData.user.id };
+        } else if (userRole === 'Sale Manager') {
+            const data = await GetGroupPermissionByUserId(dataUser.id);
+            const teamMemberLdapId = data.member?.map(m => m.ldapId) || [];
+            whereClause = {
+                UserID: {
+                in: teamMemberLdapId
+                }
+            };
+        } else if (userRole === 'Administrator') {
+            whereClause = {};
+        }
+
         const prdIds =  await prisma.objectView.groupBy({
 
             by: ['ObjectID'],
             where: {
+                ...whereClause,
                 ObjectType: 'product',
             },
             _count: {

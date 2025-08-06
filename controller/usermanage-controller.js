@@ -40,6 +40,28 @@ exports.gettingUserByRole = async (req, res) => {
             }
         });
 
+        if (role === 'Sale') {
+            const assignedSale = await prisma.userSaleTeam.findMany({
+                select: { UserID: true }
+            });
+            const assignedIds = assignedSale.map(item => item.UserID);
+
+            unassignedUsers = response.user.filter(
+                user => !assignedIds.includes(user.id)
+            );
+        } else if (role === 'Sale Manager') {
+            const assignedSaleManager = await prisma.saleTeam.findMany({
+                select: { Manager: true }
+            });
+            const assignedIds = assignedSaleManager.map(item => item.Manager);
+
+            unassignedUsers = response.user.filter(
+                user => !assignedIds.includes(user.id)
+            );
+        }
+        
+        response.user = unassignedUsers;
+
         return sendResponse(res,  "Getting the users by role name successfully.", response, 200);
     } catch (err) {
         return handleError(res, "Getting the users by role name failed.", err, 500);

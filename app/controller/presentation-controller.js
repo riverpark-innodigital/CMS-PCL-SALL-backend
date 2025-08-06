@@ -2,6 +2,8 @@ const handleError = require('../../hooks/handleError');
 const setResponse = require('../../hooks/sendResponse');
 const { PrismaClient } = require('@prisma/client');
 const DecryptToken = require('../../hooks/decryptJWT');
+const { getUserByUsername } = require('../../service/user-service');
+const { getRoleByRoleId } = require('../../service/role-service');
 
 const prisma = new PrismaClient();
 
@@ -32,6 +34,47 @@ exports.getQtyProdcutPresentKPIBySale = async (req, res) => {
     try {
         const data = await DecryptToken(req);
         const UserData = data.user.id;
+
+        let userIds = [UserData];
+        const dataUser = await getUserByUsername(data.user.username);
+        const dataRole = await getRoleByRoleId(dataUser.role);
+        const userRole = dataRole.nameEng;
+        if (userRole === 'Sale Manager') {
+            const team = await prisma.saleTeam.findMany({
+                where: {
+                    Manager: dataUser.id
+                },
+                select: {
+                    UserPer: {
+                        select: {
+                            UserID: true
+                        }
+                    }
+                }
+            });
+            const teamMemberId = team.flatMap(teamEntry =>
+                teamEntry.UserPer.map(user => user.UserID)
+            );
+            const getTeamUsers = await prisma.users.findMany({
+                where: {
+                    id: {
+                        in: teamMemberId
+                    }
+                },
+                select: {
+                    ldapUserId: true
+                }
+            });
+
+            const ldapUserIds = getTeamUsers.map(user => user.ldapUserId);
+            userIds = ldapUserIds;
+        }else if(userRole === 'Administrator'){
+            const allUsers = await prisma.users.findMany({
+                select: { id: true }
+            });
+            userIds = allUsers.map(u => u.id);
+        }
+        
         const result = [];
 
         const response = await prisma.product.findMany({
@@ -70,7 +113,9 @@ exports.getQtyProdcutPresentKPIBySale = async (req, res) => {
                         FilePath: true,
                         PresentationKPI: {
                             where: {
-                                UserId: UserData,
+                                UserId: {
+                                    in:userIds
+                                },
                             },
                             select: {
                                 PresentFileId: true,
@@ -124,6 +169,47 @@ exports.getQtyProdcutPresentKPIBySaleTop = async (req, res) => {
     try {
         const data = await DecryptToken(req);
         const UserData = data.user.id;
+
+        let userIds = [UserData];
+        const dataUser = await getUserByUsername(data.user.username);
+        const dataRole = await getRoleByRoleId(dataUser.role);
+        const userRole = dataRole.nameEng;
+        if (userRole === 'Sale Manager') {
+            const team = await prisma.saleTeam.findMany({
+                where: {
+                    Manager: dataUser.id
+                },
+                select: {
+                    UserPer: {
+                        select: {
+                            UserID: true
+                        }
+                    }
+                }
+            });
+            const teamMemberId = team.flatMap(teamEntry =>
+                teamEntry.UserPer.map(user => user.UserID)
+            );
+            const getTeamUsers = await prisma.users.findMany({
+                where: {
+                    id: {
+                        in: teamMemberId
+                    }
+                },
+                select: {
+                    ldapUserId: true
+                }
+            });
+
+            const ldapUserIds = getTeamUsers.map(user => user.ldapUserId);
+            userIds = ldapUserIds;
+        }else if(userRole === 'Administrator'){
+            const allUsers = await prisma.users.findMany({
+                select: { id: true }
+            });
+            userIds = allUsers.map(u => u.id);
+        }
+
         const result = [];
 
         const response = await prisma.product.findMany({
@@ -162,7 +248,9 @@ exports.getQtyProdcutPresentKPIBySaleTop = async (req, res) => {
                         FilePath: true,
                         PresentationKPI: {
                             where: {
-                                UserId: UserData,
+                                UserId: {
+                                    in: userIds
+                                },
                             },
                             select: {
                                 PresentFileId: true,
@@ -216,6 +304,47 @@ exports.getTopSupplierForPresentKpi = async (req, res) => {
     try {
         const data = await DecryptToken(req);
         const UserData = data.user.id;
+
+        let userIds = [UserData];
+        const dataUser = await getUserByUsername(data.user.username);
+        const dataRole = await getRoleByRoleId(dataUser.role);
+        const userRole = dataRole.nameEng;
+        if (userRole === 'Sale Manager') {
+            const team = await prisma.saleTeam.findMany({
+                where: {
+                    Manager: dataUser.id
+                },
+                select: {
+                    UserPer: {
+                        select: {
+                            UserID: true
+                        }
+                    }
+                }
+            });
+            const teamMemberId = team.flatMap(teamEntry =>
+                teamEntry.UserPer.map(user => user.UserID)
+            );
+            const getTeamUsers = await prisma.users.findMany({
+                where: {
+                    id: {
+                        in: teamMemberId
+                    }
+                },
+                select: {
+                    ldapUserId: true
+                }
+            });
+
+            const ldapUserIds = getTeamUsers.map(user => user.ldapUserId);
+            userIds = ldapUserIds;
+        }else if(userRole === 'Administrator'){
+            const allUsers = await prisma.users.findMany({
+                select: { id: true }
+            });
+            userIds = allUsers.map(u => u.id);
+        }
+
         const result = [];
 
         const response = await prisma.product.findMany({
@@ -255,7 +384,9 @@ exports.getTopSupplierForPresentKpi = async (req, res) => {
                         FilePath: true,
                         PresentationKPI: {
                             where: {
-                                UserId: UserData,
+                                UserId: {
+                                    in:userIds
+                                },
                             },
                             select: {
                                 PresentFileId: true,

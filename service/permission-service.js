@@ -17,6 +17,7 @@ module.exports = {
           UserManager: {
             select: {
               fullname: true,
+              ldapUserId:true,
               userRole: {
                 select: {
                   nameEng: true,
@@ -41,6 +42,7 @@ module.exports = {
                 select: {
                   id: true,
                   fullname: true,
+                  ldapUserId:true,
                   userRole: {
                     select: {
                       nameEng: true,
@@ -59,12 +61,14 @@ module.exports = {
         id: data.User.id,
         name: data.User.fullname,
         role: data.User.userRole.nameEng,
+        ldapId: data.User.ldapUserId,
       }));
 
       usermember.push({
         id: result.Manager,
         name: result.UserManager.fullname,
         role: result.UserManager.userRole.nameEng,
+        ldapId: result.UserManager.ldapUserId,
       });
 
       const responseFormat = {

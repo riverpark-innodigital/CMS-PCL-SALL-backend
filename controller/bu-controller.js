@@ -43,6 +43,9 @@ exports.createNewBu = async (req, res) => {
 exports.findBUs = async (req, res) => {
     try {
         const response = await prisma.businessUnit.findMany({
+            where: {
+                Active: true
+            },
             orderBy: [
                 {
                     BusinessUnitId: 'desc',
