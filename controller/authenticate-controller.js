@@ -11,16 +11,16 @@ exports.signin = async (req, res, next) => {
     try {
         passport.authenticate('local', {session: false}, (err, user, info) => {
             if (err) return next(err);
-            /* if (user) { */
+            if (user) {
                 const authToken = jwt.sign({user: user.userToken}, SecretJWT, { expiresIn: '6h'});
                 return res.status(200).json({
                     message: "Login successful",
                     body: user.userInfo,
                     authToken: authToken,
                 });
-            /* } else {
+            } else {
                 return res.status(422).json(info);
-            } */
+            }
         })(req, res, next);
     } catch (error) {
         return res.status(401).json({
