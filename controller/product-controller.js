@@ -409,6 +409,7 @@ exports.productCreate = async (req, res) => {
                 SupplierId: suplId,
                 GroupProductId: grupId,
                 ModelProductId: mdlId,
+                ...(CompanyId ? { CompanyId: Number(CompanyId) } : {}),
                 BuId: Number(BuId),
                 ProductNameTh,
                 ProductNameEn,
@@ -428,9 +429,6 @@ exports.productCreate = async (req, res) => {
                 Expiredate: formattedExpireDate || null
             },
         });
-        if (CompanyId !== undefined && CompanyId !== null && CompanyId !== "") {
-            data.CompanyId = Number(CompanyId);
-        }
 
         const createdImages = [];
         const createdFile = [];
@@ -695,7 +693,6 @@ exports.getProductBySuplId = async (req, res) => {
 
 exports.editProductById = async (req, res) => {
     try {
-
         const ProductId = parseInt(req.params.productID);
 
         const productUpVideo = req.files.ProductUpVideo ? req.files.ProductUpVideo[0] : null;
