@@ -405,7 +405,7 @@ exports.productCreate = async (req, res) => {
         }
 
         if (ProductNameEn) {
-            const productNameExist = await prisma.modelProduct.findFirst({
+            const productNameExist = await prisma.product.findFirst({
                 where: { ProductNameEn: ProductNameEn },
             });
 
