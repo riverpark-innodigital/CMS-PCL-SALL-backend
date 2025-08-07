@@ -6,6 +6,8 @@ const multerStorage = multer.diskStorage({
 
             'application/pdf': './uploads/Files/',
             'video/mp4': './uploads/Videos/',
+            'video/avi': './uploads/Videos/',
+            'video/quicktime': './uploads/Videos/',
             'image/png': './uploads/Images/',
             'image/jpeg': './uploads/Images/'
 
@@ -15,7 +17,9 @@ const multerStorage = multer.diskStorage({
     filename: (req, file, cb) => {
         const fileExtension =
             file.mimetype === 'application/pdf' ? '.pdf' : 
-            file.mimetype === 'video/mp4' ? '.mp4' : '.png';
+            file.mimetype === 'video/mp4' ? '.mp4' :
+            file.mimetype === 'video/avi' ? '.avi': 
+            file.mimetype === 'video/quicktime' ? '.mov': '.png';
         cb(null, Date.now() + '-' + `${Math.random().toString(36).substr(2,5).toUpperCase()}${fileExtension}`); // แปลงชุดตัวเลขที่สุ่มมา เป็นข้อความรูปแบบ base 36 ที่จะเอาตัวเลขไปเข้ารหัสเป็น ตัวอักษรปนกับตัวเลข
         // แต่ข้อความ 2 ตัวแรกจะล็อกเป็น 0. ตลอด เลยใช้ substr ตัด 2 ตัวแรกออก แล้วเอามาแค่ 5 ตัว
     },
@@ -23,7 +27,7 @@ const multerStorage = multer.diskStorage({
 
 const upload = multer({ 
     fileFilter: (req, file, cb) => {
-        const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf', 'video/mp4'];
+        const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf', 'video/mp4', 'video/avi', 'video/quicktime'];
 
         console.log('URL : ', req.originalUrl);
 
@@ -37,8 +41,8 @@ const upload = multer({
 
         if(req.originalUrl.startsWith('/api/productsale/')) {
 
-            if (file.fieldname === 'ProductUpVideo' && file.mimetype !== 'video/mp4') {
-                return cb(new Error('Only .mp4 video files are allowed for ProductUpVideo'), false);
+            if (file.fieldname === 'ProductUpVideo' && file.mimetype !== 'video/mp4' && file.mimetype !== 'video/avi' && file.mimetype !== 'video/quicktime') {
+                return cb(new Error('Only .mp4, .mov, .avi video files are allowed for ProductUpVideo'), false);
             }
 
             if ((file.fieldname === 'ProductImageMain' || file.fieldname === 'ProductImageChildren') && !['image/jpeg', 'image/png'].includes(file.mimetype)) {

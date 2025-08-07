@@ -189,7 +189,23 @@ exports.getMostViewProduct = async(req, res) => {
         const dataRole = await getRoleByRoleId(dataUser.role);
         const userRole = dataRole.nameEng;
 
+        let whereClause = {};
+        let productWhereClause = {};
+
+        if (userRole === 'Sale') {
+            whereClause = { UserID: userData.user.id };
+            productWhereClause = { CreateBy: dataUser.fullname };
+        } else if (userRole === 'Sale Manager') {
+            const data = await GetGroupPermissionByUserId(dataUser.id);
+            const teamLdapIds = data.member?.map(m => m.ldapId) || [];
+            const teamNames = data.member?.map(m => m.name) || [];
+
+            whereClause = { UserID: { in: teamLdapIds } };
+            productWhereClause = { CreateBy: { in: teamNames } };
+        }
+
         const allPrdData = await prisma.product.findMany({
+            where: { ...productWhereClause },
             select: {
                 ProductId: true,
                 ProductImage: true,
@@ -202,20 +218,6 @@ exports.getMostViewProduct = async(req, res) => {
                 ProductNameEn: true,
             }
         });
-
-        if (userRole === 'Sale') {
-            whereClause = { UserID: userData.user.id };
-        } else if (userRole === 'Sale Manager') {
-            const data = await GetGroupPermissionByUserId(dataUser.id);
-            const teamMemberLdapId = data.member?.map(m => m.ldapId) || [];
-            whereClause = {
-                UserID: {
-                in: teamMemberLdapId
-                }
-            };
-        } else if (userRole === 'Administrator') {
-            whereClause = {};
-        }
 
         const prdIds =  await prisma.objectView.groupBy({
 

@@ -404,6 +404,18 @@ exports.productCreate = async (req, res) => {
 
         }
 
+        if (ProductNameEn) {
+            const productNameExist = await prisma.modelProduct.findFirst({
+                where: { ProductNameEn: ProductNameEn },
+            });
+
+            if (productNameExist) {
+                return res.status(400).json({
+                    message: `This name already exists in the system.`
+                });
+            }
+        }
+
         const newProduct = await prisma.product.create({
             data: {
                 SupplierId: suplId,
@@ -708,7 +720,7 @@ exports.editProductById = async (req, res) => {
             ProductDescriptionHeaderTh, ProductDescriptionDetailTh,
             ProductDescriptionHeaderEn, ProductDescriptionDetailEn,
             ProductVideo, ProductCode, MediaDescription, MediaTitle,
-            Active, RemoveVideo,
+            Active, RemoveVideo, RemoveImageMain, RemoveImageChildren, RemovePresentFileChildren,
             UpdateBy, ExpireDate
         } = req.body;
         
@@ -799,6 +811,76 @@ exports.editProductById = async (req, res) => {
             },
             include: { ProductImages: true },
         });    
+
+        if(RemoveImageMain === 'true'){
+            const dataafterdelete = await prisma.product.update({
+                where: {
+                    ProductId: Number(ProductId),
+                },
+                data: {
+                    ProductImage: null,
+                },
+            })
+
+            await existingProduct.ProductImage ? fs.unlinkSync(`./uploads/Images/${existingProduct.ProductImage}`) : null;
+        }
+
+        if (RemoveImageChildren && RemoveImageChildren.length > 0) {
+            const imageList = Array.isArray(RemoveImageChildren)
+                ? RemoveImageChildren
+                : [RemoveImageChildren];
+
+            const deletedChildImages = await prisma.productImage.findMany({
+                where: {
+                    ProductImageImage: {
+                        in: imageList
+                    }
+                }
+            });
+
+            await prisma.productImage.deleteMany({
+                where: {
+                    ProductImageImage: {
+                        in: imageList
+                    }
+                }
+            });
+
+            deletedChildImages.forEach(image => {
+                if (image.ProductImageImage) {
+                    fs.unlinkSync(`./uploads/Images/${image.ProductImageImage}`);
+                }
+            });
+        }
+
+        if (RemovePresentFileChildren && RemovePresentFileChildren.length > 0) {
+            const presentFileList = Array.isArray(RemovePresentFileChildren)
+                ? RemovePresentFileChildren
+                : [RemovePresentFileChildren];
+
+            const deletedChildPresentFiles = await prisma.presentationFile.findMany({
+                where: {
+                    FileName: {
+                        in: presentFileList
+                    }
+                }
+            });
+
+            await prisma.presentationFile.deleteMany({
+                where: {
+                    FileName: {
+                        in: presentFileList
+                    }
+                }
+            });
+
+            deletedChildPresentFiles.forEach(file => {
+                if (file.FileName) {
+                    fs.unlinkSync(`./uploads/Files/${file.FileName}`);
+                }
+            });
+        }
+
 
         if (RemoveVideo === 'true') {
             await prisma.product.update({

@@ -25,7 +25,7 @@ exports.createCompany = async (req, res) => {
             }
         });
 
-        if (existCompanyName) throw "This Company name exist already in the system.";
+        if (existCompanyName) throw "This name already exists in the system.";
 
         const response = await prisma.companys.create({
             data: {
