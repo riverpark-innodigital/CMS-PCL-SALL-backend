@@ -47,6 +47,10 @@ passport.use(new LocalStrategy({
                 }
             });
 
+            /* if ( getRole && (getRole?.userRole?.nameEng === "Sale" || getRole?.userRole?.nameEng === "Sale Manager")){
+                return cb(null, false, { message: "Role Sale and Sale manager can't login." });
+            } */
+
             if (!getRole) return cb(null, false, { message: "this user don't have in the systems." });
 
             const userInfo = {
