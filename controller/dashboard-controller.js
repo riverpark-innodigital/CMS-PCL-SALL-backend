@@ -182,100 +182,83 @@ exports.getTop5Suppliers = async(req, res) => {
 
 }
 
-exports.getMostViewProduct = async(req, res) => {
-    try {
-        const userData = await DecryptToken(req);
-        const dataUser = await getUserByUsername(userData.user.username);
-        const dataRole = await getRoleByRoleId(dataUser.role);
-        const userRole = dataRole.nameEng;
+exports.getMostViewProduct = async (req, res) => {
+  try {
+    const userData = await DecryptToken(req);
+    const dataUser = await getUserByUsername(userData.user.username);
+    const dataRole = await getRoleByRoleId(dataUser.role);
+    const userRole = dataRole.nameEng;
 
-        let whereClause = {};
-        let productWhereClause = {};
+    let productWhereClause = {};
 
-        if (userRole === 'Sale') {
-            whereClause = { UserID: userData.user.id };
-            productWhereClause = { CreateBy: dataUser.fullname };
-        } else if (userRole === 'Sale Manager') {
-            const data = await GetGroupPermissionByUserId(dataUser.id);
-            const teamLdapIds = data.member?.map(m => m.ldapId) || [];
-            const teamNames = data.member?.map(m => m.name) || [];
+    if (userRole === 'Sale') {
+      productWhereClause = { CreateBy: dataUser.fullname };
+    } else if (userRole === 'Sale Manager') {
+      const data = await GetGroupPermissionByUserId(dataUser.id);
+      const teamNames = data.member?.map(m => m.name) || [];
+      productWhereClause = { CreateBy: { in: teamNames } };
+    }
 
-            whereClause = { UserID: { in: teamLdapIds } };
-            productWhereClause = { CreateBy: { in: teamNames } };
+    const allProducts = await prisma.product.findMany({
+      where: { ...productWhereClause },
+      select: {
+        ProductId: true,
+        ProductNameTh: true,
+        ProductNameEn: true,
+        ProductImage: true,
+        Supplier: {
+          select: {
+            SupplierImage: true,
+          }
+        },
+        PresentFile: {
+          select: {
+            PresentationKPI: {
+              select: {
+                PresentFileId: true
+              }
+            }
+          }
         }
+      }
+    });
 
-        const allPrdData = await prisma.product.findMany({
-            where: { ...productWhereClause },
-            select: {
-                ProductId: true,
-                ProductImage: true,
-                Supplier: {
-                    select: {
-                        SupplierImage: true
-                    }
-                },
-                ProductNameTh: true,
-                ProductNameEn: true,
-            }
-        });
+    const productsWithPresentationCount = allProducts.map(product => {
+      const totalPresentations = product.PresentFile.reduce((acc, presentFile) => {
+        return acc + (presentFile.PresentationKPI.length || 0);
+      }, 0);
 
-        const prdIds =  await prisma.objectView.groupBy({
+      return {
+        ...product,
+        views: totalPresentations
+      };
+    });
 
-            by: ['ObjectID'],
-            where: {
-                ...whereClause,
-                ObjectType: 'product',
-            },
-            _count: {
-                ObjectViewId: true,
-            },
-            orderBy: {
-                _count: {
-                    ObjectID: 'desc',
-                },
-            },
-            take: 1
-    
-        });
+    const topProduct = productsWithPresentationCount
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 1);
 
-        const prdIdsArray = prdIds.map(item => item.ObjectID);
-        const prdDataFilter = allPrdData.filter(data => prdIdsArray.includes(data.ProductId));
+    const response = topProduct.map(p => ({
+      ProductNameTh: p.ProductNameTh,
+      ProductNameEn: p.ProductNameEn,
+      ProductImage: p.ProductImage,
+      SupplierImage: p.Supplier?.SupplierImage,
+      views: p.views,
+    }));
 
-        const prdData = prdDataFilter.map(data => {
+    return res.status(200).json({
+      message: 'Most presented product retrieved successfully',
+      body: response,
+    });
 
-            const matchedPrdId = prdIds.find(item => item.ObjectID === data.ProductId);
-
-            return {
-                ...data,
-                SupplierImage: data.Supplier.SupplierImage,
-                views: matchedPrdId ? matchedPrdId._count.ObjectViewId : 0,
-                ProductId: undefined,
-                Supplier: undefined
-            }
-
-        });
-
-        return res.status(201).json({
-
-            message: "getting the most viewed product",
-            body: prdData
-
-        });
-
-    }
-    catch(error) {
-
-        console.error("get the most viewed product Fail: ", error);
-        return res.status(500).json({
-
-            message: "Failed to get the most viewed product",
-            error: error.message,
-
-        });
-
-    }
-
-}
+  } catch (error) {
+    console.error("getMostPresentProduct failed:", error);
+    return res.status(500).json({
+      message: 'Failed to get the most presented product',
+      error: error.message,
+    });
+  }
+};
 
 exports.getProductsDashBoard = async(req, res) => {
     try {
