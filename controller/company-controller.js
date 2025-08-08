@@ -207,7 +207,7 @@ exports.updatingCompanyById = async (req, res) => {
             }
         });    
 
-        if (reCheckCompany) throw "This Company name exist already in the system.";
+        if (reCheckCompany) throw "This name already exists in the system.";
 
         if (compamyFile !== null) {
             await prisma.companys.update({

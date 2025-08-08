@@ -813,7 +813,7 @@ exports.editProductById = async (req, res) => {
         });    
 
         if(RemoveImageMain === 'true'){
-            const dataafterdelete = await prisma.product.update({
+            await prisma.product.update({
                 where: {
                     ProductId: Number(ProductId),
                 },
@@ -827,8 +827,10 @@ exports.editProductById = async (req, res) => {
 
         if (RemoveImageChildren && RemoveImageChildren.length > 0) {
             const imageList = Array.isArray(RemoveImageChildren)
-                ? RemoveImageChildren
-                : [RemoveImageChildren];
+                ? RemoveImageChildren.flatMap(item => item.split(',').map(s => s.trim()))
+                : RemoveImageChildren
+                    ? RemoveImageChildren.split(',').map(s => s.trim())
+                    : [];
 
             const deletedChildImages = await prisma.productImage.findMany({
                 where: {
@@ -855,8 +857,10 @@ exports.editProductById = async (req, res) => {
 
         if (RemovePresentFileChildren && RemovePresentFileChildren.length > 0) {
             const presentFileList = Array.isArray(RemovePresentFileChildren)
-                ? RemovePresentFileChildren
-                : [RemovePresentFileChildren];
+                ? RemovePresentFileChildren.flatMap(item => item.split(',').map(s => s.trim()))
+                : RemovePresentFileChildren
+                    ? RemovePresentFileChildren.split(',').map(s => s.trim())
+                    : [];
 
             const deletedChildPresentFiles = await prisma.presentationFile.findMany({
                 where: {
