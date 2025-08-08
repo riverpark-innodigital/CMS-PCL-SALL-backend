@@ -146,9 +146,6 @@ exports.getFolderById = async(req,res) => {
                     },
                 },
             },
-            orderBy: {
-                ProductFolderSeq: 'desc'
-            }
         });
 
         return res.status(200).json({
