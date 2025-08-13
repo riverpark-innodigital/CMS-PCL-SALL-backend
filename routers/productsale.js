@@ -14,7 +14,8 @@ const {
     updateProductById,
     getProductByIdFord,
     editProductByIdNoChildDelete,
-    getProductBySuplIdFavOnly
+    getProductBySuplIdFavOnly,
+    getPresentUserByProduct
 } = require('../controller/product-controller');
 
 router.post('/createProductController', createProductController);
@@ -179,6 +180,8 @@ router.get('/product/:productID', getProductById);
 */
 
 router.get('/products/:supplierId', getProductBySuplId);
+
+router.get('/get_product_user/:productID', getPresentUserByProduct);
 /**
 * @swagger
 * /api/productsale/products/{supplierId}:

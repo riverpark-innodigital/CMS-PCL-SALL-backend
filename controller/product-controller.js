@@ -626,6 +626,83 @@ exports.getProductById = async (req, res) => {
     }
 };
 
+exports.getPresentUserByProduct = async (req, res) => {
+    try{
+    const ProductIdRequest = Number(req.params.productID);
+
+    const presentationFileResponse = await prisma.presentationFile.findMany({
+        where:{
+            ProductId: ProductIdRequest
+        },
+        select:{
+            id: true,
+            FileName: true,
+            FilePath: true,
+            PresentationKPI: {
+                select: {
+                    UserId: true,
+                    PresentFileId:true,
+                }
+            },
+        }
+    })
+
+    const userCountMap = {};
+
+    presentationFileResponse.forEach(file => {
+        file.PresentationKPI.forEach(kpi => {
+            const userId = kpi.UserId;
+            if (!userCountMap[userId]) {
+            userCountMap[userId] = 0;
+            }
+            userCountMap[userId]++;
+        });
+    });
+
+    const userCountsArray = Object.entries(userCountMap).map(([userId, count]) => ({
+        userId,
+        count
+    }));
+
+    const userIds = userCountsArray.map(u => u.userId);
+
+    const responseUser = await prisma.users.findMany({
+        where:{
+            ldapUserId:{in:userIds}
+        },
+        select: { 
+            ldapUserId: true,
+            fullname: true,             
+            picture: true,   
+            email: true,    
+  }
+    })
+
+    const userInfo = {};
+    responseUser.forEach(user => {
+        userInfo[user.ldapUserId] = user;
+    });
+
+    const userPresentation = userCountsArray.map(({ userId, count }) => {
+        return {
+            count,
+            ...userInfo[userId],
+        };
+    });
+
+    res.status(200).json({
+            message: 'Get qty of product present successfully.',
+            data: userPresentation,
+        });
+    } catch (error) {
+        console.error('Error qty of product present:', error);
+        res.status(500).json({
+            message: 'Failed to get qty of product present',
+            error: error.message,
+        });
+    }
+}
+
 exports.getProductBySuplId = async (req, res) => {
     try {
         const suplId = parseInt(req.params.supplierId);
