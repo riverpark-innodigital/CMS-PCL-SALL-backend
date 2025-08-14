@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const upload = require('../hooks/multer');
+const { upload } = require('../hooks/multer');
 
 const { prdGroupCreate, delProductGroupById, getAllGroup, getGroupById, updateGroupById, getProductGroupBySupId } = require('../controller/productGroup-controller');
 

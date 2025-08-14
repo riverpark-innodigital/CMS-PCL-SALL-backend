@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const upload = require('../hooks/multer');
+const { upload } = require('../hooks/multer');
 const {
     createPresentationFile,
 } = require('../controller/presentation-controller');

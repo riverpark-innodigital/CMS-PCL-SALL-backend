@@ -1,4 +1,7 @@
 const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const ffmpeg = require('fluent-ffmpeg');
 
 const multerStorage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -73,4 +76,51 @@ const upload = multer({
     storage: multerStorage
 });
 
-module.exports = upload;
+function uploadFieldsWithConvert(fields) {
+    const middleware = upload.fields(fields);
+    return (req, res, next) => {
+        middleware(req, res, (err) => {
+            if (err) return next(err);
+
+            const convertTasks = [];
+            if (req.files && req.files['ProductUpVideo']) {
+                req.files['ProductUpVideo'].forEach(file => {
+                    if (path.extname(file.filename).toLowerCase() === '.avi') {
+                        const oldPath = file.path;
+                        const newPath = oldPath.replace(/\.avi$/, '.mp4');
+
+                        convertTasks.push(new Promise((resolve, reject) => {
+                            ffmpeg(oldPath)
+                                .output(newPath)
+                                .videoCodec('libx264')
+                                .audioCodec('aac')
+                                .on('end', () => {
+                                    fs.unlink(oldPath, () => {});
+                                    file.filename = path.basename(newPath);
+                                    file.path = newPath;
+                                    file.mimetype = 'video/mp4';
+                                    resolve();
+                                })
+                                .on('error', reject)
+                                .run();
+                        }));
+                    }
+                });
+            }
+
+            if (convertTasks.length) {
+                Promise.all(convertTasks)
+                    .then(() => next())
+                    .catch(next);
+            } else {
+                next();
+            }
+        });
+    };
+}
+
+
+module.exports = {
+    upload,
+    uploadFieldsWithConvert
+};

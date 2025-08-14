@@ -8,7 +8,7 @@ const {
     deletingCompanyById,
     getCompanyBySup,
  } = require('../controller/company-controller');
-const upload = require('../hooks/multer');
+const { upload } = require('../hooks/multer');
 
 /**
  * @swagger

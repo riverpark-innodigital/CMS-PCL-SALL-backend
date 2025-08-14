@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const upload = require('../hooks/multer');
+const { upload, uploadFieldsWithConvert } = require('../hooks/multer');
 
 const {
     getAllProduct,
@@ -51,7 +51,7 @@ router.get('/product', getAllProduct);
 */
 router.put('/product/:proId/a', updateProductById);
 
-router.post('/product', upload.fields([
+router.post('/product', uploadFieldsWithConvert([
     { name: 'ProductUpVideo', maxCount: 1 },
     { name: 'ProductImageMain', maxCount: 1 },
     { name: 'ProductImageChildren', maxCount: 20 },
@@ -200,7 +200,7 @@ router.get('/get_product_user/:productID', getPresentUserByProduct);
 *         description: getting product by Supplier's id successfully
 */
 
-router.put('/product/:productID', upload.fields([
+router.put('/product/:productID', uploadFieldsWithConvert([
     { name: 'ProductUpVideo', maxCount: 1 },
     { name: 'ProductImageMain', maxCount: 1 },
     { name: 'ProductImageChildren', maxCount: 10 }
