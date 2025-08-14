@@ -9,6 +9,7 @@ const {
     addNewMultipleUser,
     gettingUserByRole
 } = require('../controller/usermanage-controller');
+const { upload } = require('../hooks/multer');
 
 const router = express.Router();
 
@@ -140,7 +141,7 @@ router.get('/users_role/:role/:isAll?', gettingUserByRole);
 *       201:
 *         description: Group Added Ldap User Success
 */
-router.post('/single_user', addnewSingleUser);
+router.post('/single_user', upload.single('ProfilePicture'), addnewSingleUser);
 
 /**
 * @swagger
@@ -183,7 +184,7 @@ router.post('/multiple_user', addNewMultipleUser);
 *       200:
 *         description: Group Permission Updated Success
 */
-router.put('/users/:userId', updateUser);
+router.put('/users/:userId', upload.single('ProfilePicture'), updateUser);
 
 /**
 * @swagger

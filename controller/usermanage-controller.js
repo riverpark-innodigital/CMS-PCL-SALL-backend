@@ -2,6 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const handleError = require('../hooks/handleError');
 const sendResponse = require('../hooks/sendResponse');
 const { AxiosInstance } = require('../hooks/Axiosinstance');
+const fs = require('fs');
 
 const prisma = new PrismaClient();
 
@@ -85,6 +86,7 @@ exports.gettingUserById = async (req, res) => {
                 ldapUserId: true,
                 email: true,
                 role: true,
+                picture: true,
                 active: true,
                 username: true,
                 updatedAt: true,
@@ -191,6 +193,7 @@ exports.addnewSingleUser = async (req, res) => {
     try {
         const { ldapUsername, ldapName, role, email, handleId, status } = req.body;
         const ConvertActive = (status === 'true' || status);
+        const profilePicture = req.file;
         const axios = await AxiosInstance(req);
 
         const response = await axios.post('/user-management/users', {
@@ -219,6 +222,7 @@ exports.addnewSingleUser = async (req, res) => {
                 ldapUserId: response?.data?.data?.id,
                 active: ConvertActive,
                 role: Number(role),
+                picture: profilePicture?.filename || null
             }
         });
 
@@ -406,8 +410,9 @@ exports.updateUserOld = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
     try {
-        const { ldapUsername, ldapName, email, role, status } = req.body;
+        const { ldapUsername, ldapName, email, role, status, isRemovePicture } = req.body;
         const ConvertActive = (status === 'true' || status);
+        const profilePicture = req.file;
         const { userId } = req.params;
         let result = [];
 
@@ -431,9 +436,9 @@ exports.updateUser = async (req, res) => {
 
             if (!createNewUser) throw "createNewUser failed";
 
-            const users = await prisma.users.findFirst({
+            const users = await prisma.users.findUnique({
                 where: {
-                    ldapUserId: createNewUser?.ldapUserId,
+                    id: createNewUser?.id,
                 },
                 select: {
                     id: true,
@@ -462,25 +467,39 @@ exports.updateUser = async (req, res) => {
             result = users;
         }
 
-        if (reCheckUserId) {       
-        
-            const updateUserData = await prisma.users.updateMany({
+        if (reCheckUserId) {   
+            let picturePath = reCheckUserId.picture;
+            if (isRemovePicture === 'true') {
+                try {
+                    fs.unlinkSync(`./uploads/Images/${reCheckUserId.picture}`);
+                } catch (e) {
+                    console.warn("Failed to remove old picture:", e.message);
+                }
+                picturePath = null;
+            }
+
+            if (profilePicture) {
+                picturePath = profilePicture.filename;
+            }
+
+            const updateUserData = await prisma.users.update({
                 where: {
-                    ldapUserId: userId,
+                    id: reCheckUserId?.id,
                 },
                 data: {
-                    email: email,
-                    role: role,
+                    email: email || null,
+                    role: Number(role),
                     active: ConvertActive === true ? true : false,
+                    picture: picturePath,
                 }
             });
 
             console.log('test');
             
 
-            const users = await prisma.users.findFirst({
+            const users = await prisma.users.findUnique({
                 where: {
-                    ldapUserId: updateUserData?.ldapUserId,
+                    id: updateUserData?.id,
                 },
                 select: {
                     id: true,
