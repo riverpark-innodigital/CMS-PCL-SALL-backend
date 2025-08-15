@@ -30,7 +30,7 @@ exports.prdGroupCreate = async (req, res) => {
         
 
         if (existingPrdGroup) {
-            throw "this product group name is exist already.";
+            throw "This name already exists in the system.";
         }
         
         const prdGrupData = await prisma.groupProduct.create({

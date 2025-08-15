@@ -167,15 +167,21 @@ exports.supplieUpdate = async(req, res) => {
 
         if (existSupName) throw "This name already exists in the system.";
 
-        if (companyId) {
-            companyIds = Array.isArray(companyId) 
-            ? companyId.map(Number) 
-            : companyId.split(',').map(Number);
+        
+        if (!companyId || (Array.isArray(companyId) && companyId.length === 0)) {
+            await prisma.supplierCompany.deleteMany({
+                where: { SupplierId: suplId }
+            });
+            isSameCompanies = true;
+        }else {
+            companyIds = Array.isArray(companyId)
+                ? companyId.map(Number)
+                : companyId.split(',').map(Number);
 
             const existingCompanies = await prisma.companys.findMany({
                 where: {
                     Active: true,
-                    CompanyId: { in: companyIds.map(Number) }
+                    CompanyId: { in: companyIds }
                 }
             });
 
@@ -191,7 +197,7 @@ exports.supplieUpdate = async(req, res) => {
             });
 
             const existingCompanyIds = existingSupplierCompanies.map(s => s.CompanyId).sort();
-            const newCompanyIds = companyIds.map(Number).sort();
+            const newCompanyIds = companyIds.sort();
 
             isSameCompanies = JSON.stringify(existingCompanyIds) === JSON.stringify(newCompanyIds);
         }

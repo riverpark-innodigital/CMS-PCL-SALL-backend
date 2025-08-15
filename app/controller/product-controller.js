@@ -2,6 +2,8 @@ const handleError = require('../../hooks/handleError');
 const setResponse = require('../../hooks/sendResponse');
 const { PrismaClient } = require('@prisma/client');
 const DecryptToken = require('../../hooks/decryptJWT');
+const fs = require('fs');
+const path = require('path');
 
 const prisma = new PrismaClient();
 
@@ -139,6 +141,12 @@ exports.GettingProductById = async (req, res) => {
                 },
             }
         });
+
+        if (response?.Product[0]?.ProductUpVideo) {
+            const videoPath = path.join(__dirname, "../../uploads", "Videos", response.Product[0].ProductUpVideo);
+            const videoBuffer = fs.readFileSync(videoPath);
+            response.Product[0].ProductUpVideo = videoBuffer.toString("base64");
+        }
 
         const favProductIds = await prisma.favorite.findMany({
             where: {
