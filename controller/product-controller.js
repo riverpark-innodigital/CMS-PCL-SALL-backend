@@ -1070,6 +1070,10 @@ exports.delProductById = async (req, res) => {
 
         const folderIds = prdFlExist.map(folder => folder.ProductFolderId);
 
+        await prisma.presentationFile.deleteMany({
+            where: { ProductId: prdId }
+        });
+
         if (folderIds.length > 0) {
 
             await prisma.productFile.deleteMany({

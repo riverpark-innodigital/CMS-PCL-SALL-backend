@@ -142,12 +142,6 @@ exports.GettingProductById = async (req, res) => {
             }
         });
 
-        if (response?.Product[0]?.ProductUpVideo) {
-            const videoPath = path.join(__dirname, "../../uploads", "Videos", response.Product[0].ProductUpVideo);
-            const videoBuffer = fs.readFileSync(videoPath);
-            response.Product[0].ProductUpVideo = videoBuffer.toString("base64");
-        }
-
         const favProductIds = await prisma.favorite.findMany({
             where: {
                 UserID: UserData,
@@ -183,5 +177,125 @@ exports.GettingProductById = async (req, res) => {
         return setResponse(res, "Getting Product by id successfully.", resFormat, 200);
     } catch (err) {
         return handleError(res, "Getting Product by id failed.", err, 500);
+    }
+};  
+
+exports.GettingProductVideoById = async (req, res) => {
+    try {
+        const { supId, productId } = req.params;
+        const data = await DecryptToken(req);
+        const UserData = data.user.id;
+
+         const response = await prisma.supplier.findFirst({
+            where: {
+                SupplierId: Number(supId),
+            },
+            select: {
+                SupplierNameEn: true,
+                SupplierDescriptionEN: true,
+                SupplierImage: true,
+                Product: {
+                    where: {
+                        ProductId: Number(productId),
+                    },
+                    select: {
+                        ProductId: true,
+                        SupplierId: true,
+                        ProductNo: true,
+                        GroupProductId: true,
+                        ModelProductId: true,
+                        ProductNameTh: true,
+                        ProductNameEn: true,
+                        ProductImage: true,
+                        ProductDescriptionHeaderTh: true,
+                        ProductDescriptionDetailTh: true,
+                        ProductDescriptionHeaderEn: true,
+                        ProductDescriptionDetailEn: true,
+                        MeadiaTitle: true,
+                        ProductVideo: true,
+                        MeadiaDescription: true,
+                        ProductUpVideo: true,
+                        Active: true,
+                        ProductImages: {
+                            select: {
+                                ProductImageImage: true,
+                                ProductImageNameEn: true,
+                            }
+                        },
+                        ProductFolders: {
+                            where: {
+                                Active: true,
+                            },
+                            select: {
+                                ProductFolderId: true,
+                                ProductFolderNameTh: true,
+                                ProductFolderNameEn: true,
+                                ProductFolderSeq: true,
+                                Active: true,
+                                ProductFiles: {
+                                   select: {
+                                        ProductFileId: true,
+                                        ProductFileNameTh: true,
+                                        ProductFileNameEn: true,
+                                        ProductFile: true,
+                                        Active: true,
+                                   }
+                                }
+                            }
+                        },
+                        PresentFile: {
+                            select: {
+                                id: true,
+                                FileName: true,
+                                FileOriginalName: true,
+                                FilePath: true,
+                            }
+                        }
+                    }
+                },
+            }
+        });
+
+        if (response?.Product[0]?.ProductUpVideo) {
+            const videoPath = path.join(__dirname, "../../uploads", "Videos", response.Product[0].ProductUpVideo);
+            const videoBuffer = fs.readFileSync(videoPath);
+            response.Product[0].ProductUpVideo = Array.from(new Uint8Array(videoBuffer));
+        }
+
+        const favProductIds = await prisma.favorite.findMany({
+            where: {
+                UserID: UserData,
+                ObjectType: 'Product',
+            },
+            select: {
+                ObjectID: true,
+                FavoriteId: true
+            },
+        });
+
+        const favProductId = favProductIds.map(fav => fav.ObjectID);
+
+        const allProductWithFav = response.Product.map(product => {
+            return {
+                Favorited: favProductId.includes(product.ProductId) ? 1 : 0,
+                ...product,
+            };
+        });
+
+        await response.Product[0].ProductImages.push({
+            "ProductImageImage": response.Product[0].ProductImage,
+            "ProductImageNameEn": response.Product[0].ProductImage
+        })
+
+        const resFormat = {
+            SupplierNameEn: response.SupplierNameEn,
+            SupplierDescriptionEN: response.SupplierDescriptionEN,
+            SupplierImage: response.SupplierImage,
+            Product: allProductWithFav,
+        }
+
+        return setResponse(res, "Getting Product with Binary Video by id successfully.", resFormat, 200);
+    } catch (err) {
+        return handleError(res, "Getting Product with Binary Video by id failed.", err, 500);
     }
 };  

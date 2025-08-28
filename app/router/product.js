@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const {
     GettingProductBySup,
-    GettingProductById
+    GettingProductById,
+    GettingProductVideoById
 } = require('../controller/product-controller');
 
 /**
@@ -61,5 +62,7 @@ router.get('/product/:supId/:pgid', GettingProductBySup);
 *         description: getting product successfully
 */
 router.get('/productdetail/:supId/:productId', GettingProductById);
+
+router.get('/productdetailvdo/:supId/:productId', GettingProductVideoById);
 
 module.exports = router;

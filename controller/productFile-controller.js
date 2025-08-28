@@ -60,12 +60,27 @@ exports.fileCreate = async(req, res) => {
 
             ProductFileNameTh, ProductFileNameEn,
             Active, CreateBy,
-            UpdateBy, ProductFolderId
+            UpdateBy, ProductFolderId, ProductFileId
 
         } = req.body;
 
         const ConvertActive = (Active === 'true' || Active);
         const file = req.file;
+
+        let productFileExist = null;
+        if(ProductFileId && !isNaN(parseInt(ProductFileId))){
+            productFileExist = await prisma.productFile.findUnique({
+                where: { ProductFileId: parseInt(ProductFileId) },
+            });
+        }
+
+        if (productFileExist) {
+            return res.status(200).json({
+                message: `Product file with ID ${ProductFileId} already exists. Skipping creation.`,
+                body: productFileExist,
+            });
+        }
+
         const folderExist = await prisma.productFolder.findUnique({
             where: { ProductFolderId: parseInt(ProductFolderId) },
         });

@@ -109,6 +109,10 @@ exports.delProductGroupById = async (req, res) => {
             data: { GroupProductId: null },
         });
 
+        await prisma.ProductGroupSup.deleteMany({
+            where: { ProductGroupId: grupId },
+        });
+
         await prisma.groupProduct.delete({
             where: { GroupProductId: grupId },
         });
