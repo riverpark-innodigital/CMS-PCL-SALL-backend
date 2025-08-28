@@ -787,6 +787,7 @@ exports.editProductById = async (req, res) => {
         const productUpVideo = req.files.ProductUpVideo ? req.files.ProductUpVideo[0] : null;
         const mainImage = req.files.ProductImageMain ? req.files.ProductImageMain[0] : null;
         const childImages = req.files.ProductImageChildren || [];
+        const presentFiles = req.files.presentFiles || [];
         const user = await DecryptToken(req);
         const UserData = user.user.fullname;
         
@@ -958,6 +959,18 @@ exports.editProductById = async (req, res) => {
             deletedChildPresentFiles.forEach(file => {
                 if (file.FileName) {
                     fs.unlinkSync(`./uploads/Files/${file.FileName}`);
+                }
+            });
+        }
+        console.log(presentFiles,'fgl;dfkgl;dfkg')
+        for (const file of presentFiles) {
+            console.log(file,'presentfile')
+            await prisma.presentationFile.create({
+                data: {
+                    ProductId: ProductId,
+                    FileName: file.filename,
+                    FileOriginalName: file.originalname,
+                    FilePath: file.path,
                 }
             });
         }

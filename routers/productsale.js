@@ -203,7 +203,8 @@ router.get('/get_product_user/:productID', getPresentUserByProduct);
 router.put('/product/:productID', uploadFieldsWithConvert([
     { name: 'ProductUpVideo', maxCount: 1 },
     { name: 'ProductImageMain', maxCount: 1 },
-    { name: 'ProductImageChildren', maxCount: 10 }
+    { name: 'ProductImageChildren', maxCount: 10 },
+    { name: 'presentFiles', maxCount: 20 },
 ]), editProductById);
 /**
  * @swagger
