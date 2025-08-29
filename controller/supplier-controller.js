@@ -471,6 +471,10 @@ exports.delSuplById = async (req, res) => {
 
         }
 
+        await prisma.supplierCompany.deleteMany({
+            where: { SupplierId: suplId }
+        });
+
         await prisma.supplier.delete({
             where: { SupplierId: suplId },
         });

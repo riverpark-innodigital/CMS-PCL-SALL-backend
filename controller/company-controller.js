@@ -8,7 +8,7 @@ const fs = require('fs');
 exports.createCompany = async (req, res) => {
     try {
         const { NameTH, NameEN, DescriptionTH, DescriptionEN, BUNameEN , BUNameTH, Active, BU } = req.body;
-        const compamyFile = req.files.compamyFile[0];
+        const compamyFile = req.files?.compamyFile?.[0] || null;
         const compamyPicture = req.files.compamyPicture[0];
         const ConvertActive = (Active === 'true' || Active);
         const userInfo = await DecryptToken(req);
@@ -316,9 +316,15 @@ exports.deletingCompanyById = async (req, res) => {
             status: 404,
         }
 
-        await prisma.suppliers.deleteMany({
+        await prisma.supplierCompany.deleteMany({
             where: {
                 CompanyId: Number(CompanyID),
+            },
+        });
+
+        await prisma.companyBusinessUnit.deleteMany({
+            where: {
+                companyId: Number(CompanyID),
             },
         });
 
