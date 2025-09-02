@@ -141,6 +141,7 @@ exports.gettingAllUsers = async (req, res) => {
                 active: true,
                 updatedAt: true,
                 handlerBy: true,
+                password: true,
                 SaleTeam: {
                     select: {
                         SaleTeam: {
@@ -166,14 +167,13 @@ exports.gettingAllUsers = async (req, res) => {
         // Create a Map keyed by ldapUserId
         const userMap = new Map(users.map(u => [u.ldapUserId, u]));
 
-        // Map over LDAP users and attach matching app user
-        const enrichedUsers = ldapUsers.map(user => {
-            const matchedUser = userMap.get(user.userId);
-            return {
-                ...user,
-                appUser: matchedUser || null
-            };
-        });
+        const enrichedUsers = ldapUsers.map(user => { 
+            const matchedUser = userMap.get(user.userId); 
+                return { 
+                    ...user,
+                    appUser: matchedUser || null 
+                }; 
+            });
 
         // Sort so that users with an appUser come first
         enrichedUsers.sort((a, b) => {
@@ -183,7 +183,24 @@ exports.gettingAllUsers = async (req, res) => {
             return 0; // maintain order if both have or both don't
         });
 
-        return sendResponse(res, "Getting all users successfully completed", enrichedUsers, 200);
+        const nonLdapUsers = users
+            .filter(u => !u.ldapUserId)
+            .map(u => ({
+                userId: u.id,
+                name: u.fullname,
+                appUser: u
+            }));
+
+        const finalUsers = [...enrichedUsers, ...nonLdapUsers];
+
+        // Optional: sort so that users with appUser come first
+        finalUsers.sort((a, b) => {
+            if (a.appUser && !b.appUser) return -1;
+            if (!a.appUser && b.appUser) return 1;
+            return 0;
+        });
+
+        return sendResponse(res, "Getting all users successfully completed", finalUsers, 200);
     } catch (error) {
         return handleError(res, "Error getting all users", error, 500);
     }
@@ -239,6 +256,78 @@ exports.addnewSingleUser = async (req, res) => {
                 active: true,
                 updatedAt: true,
                 handlerBy: true,
+                SaleTeam: {
+                    select: {
+                        SaleTeam: {
+                            select: {
+                                SaleTeamName: true
+                            }
+                        }
+                    }
+                },
+                userRole: {
+                    select: {
+                        nameEng: true
+                    }
+                }
+            }
+        });
+        
+        return sendResponse(res, "Adding new user successfully completed", users, 200);
+    } catch (error) {
+        return handleError(res, "Error adding new user", error, 500);
+    }
+};
+
+exports.addnewSingleLocalUser = async (req, res) => {
+    try {
+        const { username, role, email, status, password } = req.body;
+        const ConvertActive = (status === 'true' || status);
+        const profilePicture = req.file;
+        const axios = await AxiosInstance(req);
+
+        const response = await axios.post('/user-management/users', {
+            username: username,
+            name: username,
+            email: email,
+            role: Number(role) === 1 ? "ADMIN" : "ADMIN",
+            status: "active",
+            password: password,
+            customers: [
+                "CUST001",
+                "CUST002"
+            ]
+        });
+
+        console.log(response?.data);
+        
+        if (response.status !== 200) throw "Added user data to ldap server failed.";
+    
+        const createNewUser = await prisma.users.create({
+            data: {
+                username: username,
+                fullname: username,
+                handlerBy: null,
+                email: email,
+                ldapUserId: response?.data?.data?.id,
+                password: password,
+                active: ConvertActive,
+                role: Number(role),
+                picture: profilePicture?.filename || null
+            }
+        });
+
+        if (!createNewUser) throw "createNewUser failed";
+
+        const users = await prisma.users.findFirst({
+            where: {
+                id: createNewUser?.id,
+            },
+            select: {
+                id: true,
+                fullname: true,
+                active: true,
+                updatedAt: true,
                 SaleTeam: {
                     select: {
                         SaleTeam: {
@@ -531,6 +620,148 @@ exports.updateUser = async (req, res) => {
         return sendResponse(res, "Updating the user data successfully", result, 200);
     } catch (error) {
         return handleError(res, "Updating user failed", error, 500);
+    }
+}
+
+exports.updateLocalUser = async (req, res) => {
+    try {
+        const { username, role, email, status, password, isRemovePicture } = req.body;
+        const ConvertActive = (status === 'true' || status);
+        const profilePicture = req.file;
+        const { userId } = req.params;
+        let result = [];
+        const axios = await AxiosInstance(req);
+    
+        const response = await axios.put('/user-management/users', {
+            username: username,
+            name: username,
+            email: email,
+            role: Number(role) === 1 ? "ADMIN" : "ADMIN",
+            status: "active",
+            ...(password ? { password } : {}),
+            customers: [
+                "CUST001",
+                "CUST002"
+            ]
+        });
+
+        if (response.status !== 200) throw "Update user data to ldap server failed.";
+
+        const reCheckUserId = await prisma.users.findFirst({
+            where: {
+                ldapUserId: userId,
+            },
+        });
+
+
+        if (!reCheckUserId) {
+            const createNewUser = await prisma.users.create({
+                data: {
+                    username: username,
+                    fullname: username,
+                    email: email,
+                    password: password,
+                    ldapUserId: null,
+                    active: ConvertActive === true ? true : false,
+                    role: Number(role),
+                }
+            });
+
+            if (!createNewUser) throw "createNewUser failed";
+
+            const users = await prisma.users.findUnique({
+                where: {
+                    id: createNewUser?.id,
+                },
+                select: {
+                    id: true,
+                    fullname: true,
+                    ldapUserId: true,
+                    active: true,
+                    updatedAt: true,
+                    handlerBy: true,
+                    SaleTeam: {
+                        select: {
+                            SaleTeam: {
+                                select: {
+                                    SaleTeamName: true
+                                }
+                            }
+                        }
+                    },
+                    userRole: {
+                        select: {
+                            nameEng: true
+                        }
+                    }
+                }
+            });
+
+            result = users;
+        }
+
+        if (reCheckUserId) {   
+            let picturePath = reCheckUserId.picture;
+            if (isRemovePicture === 'true') {
+                try {
+                    fs.unlinkSync(`./uploads/Images/${reCheckUserId.picture}`);
+                } catch (e) {
+                    console.warn("Failed to remove old picture:", e.message);
+                }
+                picturePath = null;
+            }
+
+            if (profilePicture) {
+                picturePath = profilePicture.filename;
+            }
+
+            const updateUserData = await prisma.users.update({
+                where: {
+                    id: reCheckUserId?.id,
+                },
+                data: {
+                    email: email || null,
+                    role: Number(role),
+                    active: ConvertActive === true ? true : false,
+                    picture: picturePath,
+                    ...(password && password.trim() !== "" ? { password } : {})
+                }
+            });
+
+            const users = await prisma.users.findUnique({
+                where: {
+                    id: updateUserData?.id,
+                },
+                select: {
+                    id: true,
+                    fullname: true,
+                    ldapUserId: true,
+                    active: true,
+                    updatedAt: true,
+                    handlerBy: true,
+                    SaleTeam: {
+                        select: {
+                            SaleTeam: {
+                                select: {
+                                    SaleTeamName: true
+                                }
+                            }
+                        }
+                    },
+                    userRole: {
+                        select: {
+                            nameEng: true
+                        }
+                    }
+                }
+            });
+
+            result = users;
+        }
+        
+        return sendResponse(res, "Updating the user data successfully", result, 200);
+    } catch (error) {
+        return handleError(res, "Updating local user failed", error, 500);
     }
 }
 

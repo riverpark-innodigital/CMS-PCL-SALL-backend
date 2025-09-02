@@ -7,7 +7,9 @@ const {
     gettingUserById,
     gettinghandlers,
     addNewMultipleUser,
-    gettingUserByRole
+    gettingUserByRole,
+    addnewSingleLocalUser,
+    updateLocalUser
 } = require('../controller/usermanage-controller');
 const { upload } = require('../hooks/multer');
 
@@ -143,6 +145,8 @@ router.get('/users_role/:role/:isAll?', gettingUserByRole);
 */
 router.post('/single_user', upload.single('ProfilePicture'), addnewSingleUser);
 
+router.post('/single_local_user', upload.single('ProfilePicture'), addnewSingleLocalUser);
+
 /**
 * @swagger
 * /api/usermanagement/multiple_user:
@@ -185,6 +189,8 @@ router.post('/multiple_user', addNewMultipleUser);
 *         description: Group Permission Updated Success
 */
 router.put('/users/:userId', upload.single('ProfilePicture'), updateUser);
+
+router.put('/user-local/:userId', upload.single('ProfilePicture'), updateLocalUser);
 
 /**
 * @swagger
