@@ -164,8 +164,12 @@ exports.gettingAllUsers = async (req, res) => {
             }
         });
 
+        const usersWithLocalFlag = users.map(({ password, ...u }) => ({
+            ...u,
+            isLocal: !!password
+        }));
         // Create a Map keyed by ldapUserId
-        const userMap = new Map(users.map(u => [u.ldapUserId, u]));
+        const userMap = new Map(usersWithLocalFlag.map(u => [u.ldapUserId, u]));
 
         const enrichedUsers = ldapUsers.map(user => { 
             const matchedUser = userMap.get(user.userId); 
