@@ -47,9 +47,9 @@ passport.use(new LocalStrategy({
                 }
             });
 
-            if ( getRole && (getRole?.userRole?.nameEng === "Sale" || getRole?.userRole?.nameEng === "Sale Manager")){
+            /* if ( getRole && (getRole?.userRole?.nameEng === "Sale" || getRole?.userRole?.nameEng === "Sale Manager")){
                 return cb(null, false, { message: "Role Sale and Sale manager can't login." });
-            }
+            } */
 
             if (!getRole) return cb(null, false, { message: "this user don't have in the systems." });
 
@@ -58,7 +58,11 @@ passport.use(new LocalStrategy({
                 id: User.data.data.userId,
                 email: User.data.data.email,
                 role: getRole?.userRole?.nameEng ? getRole?.userRole?.nameEng : 'User Not Role',
-                picture: User.data.data.picture,
+                picture: User.data.data.picture || {
+                    "filename": "1744787461024_bukz5iq0.png",
+                    "filetype": "image/png",
+                    "url": "https://salesorder.pclholding.com/minio/profile-picture/1744787461024_bukz5iq0.png"
+                },
             };
 
             return cb(null, { userToken: user.data, userInfo: userInfo }, {message: 'Logged In Successfully'})

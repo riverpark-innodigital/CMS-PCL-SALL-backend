@@ -300,7 +300,12 @@ exports.addnewSingleLocalUser = async (req, res) => {
             customers: [
                 "CUST001",
                 "CUST002"
-            ]
+            ], 
+            picture:{
+                filename: profilePicture?.filename || "",
+                filetype: profilePicture ? "image/png": "",
+                url: "",
+            }
         });
 
         console.log(response?.data);
