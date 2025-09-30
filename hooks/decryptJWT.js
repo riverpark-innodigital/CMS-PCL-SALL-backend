@@ -42,7 +42,11 @@ const DecryptToken = async (req) => {
             email: User.data.data.email,
             id: User.data.data.userId,
             role: getRole?.userRole?.nameEng ? getRole?.userRole?.nameEng : 'User Not Role',
-            picture: User.data.data.picture,
+            picture: User.data.data.picture || {
+                "filename": "1744787461024_bukz5iq0.png",
+                "filetype": "image/png",
+                "url": "https://salesorder.pclholding.com/minio/profile-picture/1744787461024_bukz5iq0.png"
+            },
         }
     };
         
