@@ -127,7 +127,10 @@ exports.GettingProductById = async (req, res) => {
                                         Active: true,
                                    }
                                 }
-                            }
+                            },
+                            orderBy: {
+                                ProductFolderSeq: "asc",
+                            },
                         },
                         PresentFile: {
                             select: {
@@ -241,7 +244,10 @@ exports.GettingProductVideoById = async (req, res) => {
                                         Active: true,
                                    }
                                 }
-                            }
+                            },
+                            orderBy: {
+                                ProductFolderSeq: "asc",
+                            },
                         },
                         PresentFile: {
                             select: {
