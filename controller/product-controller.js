@@ -570,7 +570,7 @@ exports.getProductById = async (req, res) => {
             CompanyId: product.CompanyId,
             BuId: product.BuId,
             ProductGroupId: product.GroupProductId,
-            CompanyName: product.Company.CompanyNameEN,
+            CompanyName: product?.Company?.CompanyNameEN,
             BUName: product?.BusinessUnit?.Name || 'No Data',
             ProductNo: product.ProductNo,
             ProductNameTh: product.ProductNameTh,
