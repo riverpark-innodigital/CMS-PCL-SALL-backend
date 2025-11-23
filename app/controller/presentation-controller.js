@@ -76,6 +76,7 @@ exports.getQtyProdcutPresentKPIBySale = async (req, res) => {
         }
         
         const result = [];
+        userIds = userIds.map(id => String(id));
 
         const response = await prisma.product.findMany({
             where: {
@@ -112,11 +113,9 @@ exports.getQtyProdcutPresentKPIBySale = async (req, res) => {
                         FileOriginalName: true,
                         FilePath: true,
                         PresentationKPI: {
-                            where: {
-                                UserId: {
-                                    in:userIds
-                                },
-                            },
+                            where: userRole !== 'Administrator' 
+                            ? { UserId: { in: userIds } }
+                            : {}, 
                             select: {
                                 PresentFileId: true,
                                 PresentTo: true,
