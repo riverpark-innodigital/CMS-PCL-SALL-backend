@@ -11,10 +11,13 @@ exports.GettingAllPGroup = async (req, res) => {
             where: {
                 Active: true,
             },
+            orderBy: {
+                CreateDate: 'asc'
+            }
         });
 
         return setResponse(res, "Getting All Product Group successfully.", response, 200);
     } catch (error) {
-        return handleError(res, "Getting All Product Group failed.", err, 500);
+        return handleError(res, "Getting All Product Group failed.", error, 500);
     }
 }
